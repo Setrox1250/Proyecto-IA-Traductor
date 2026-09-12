@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+.pytest_cache/
+
+# Datos
+data/raw/audio/*
+data/raw/metadata/*
+data/processed/audio/*
+data/processed/manifests/*
+data/external/**/*
+!data/**/.gitkeep
+!data/**/README.md
+
+# Modelos
+models/checkpoints/*
+models/fine_tuned/*
+!models/README.md
+
+# Outputs
+outputs/audio/*
+outputs/metrics/*
+outputs/plots/*
+outputs/logs/*
+!outputs/**/.gitkeep
+
+# Config y secretos
+.env
+*.key
+!configs/*.yaml
+
+# Docs
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Aviso: no subir checkpoints ni audios grandes al repositorio.
+# Para datos/muestras de ejemplo, usar archivos de tamaño reducido o LFS.

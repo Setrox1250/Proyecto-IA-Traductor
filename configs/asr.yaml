@@ -1,0 +1,4 @@
+model_name: ""
+sample_rate: 16000
+batch_size: 8
+language: ""
