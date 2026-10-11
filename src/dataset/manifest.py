@@ -2,12 +2,13 @@
 
 Convierte la muestra de audio (FLEURS) en el "golden dataset" del proyecto:
 audio + transcripción en español + traducción de referencia al inglés + split.
-La traducción de referencia se introduce de forma manual (nunca generada por el
-propio modelo que luego será evaluado).
+La referencia inglesa se recupera de FLEURS por el identificador multilingüe de
+la oración; nunca se genera con el modelo que luego será evaluado.
 """
 
 from __future__ import annotations
 
+from io import StringIO
 from pathlib import Path
 
 import numpy as np
@@ -18,6 +19,7 @@ DEV_RATIO = 0.7
 
 EVALUATION_COLUMNS = [
     "sample_id",
+    "sentence_id",
     "speaker_id",
     "audio_path",
     "transcription_es",
@@ -30,6 +32,21 @@ EVALUATION_COLUMNS = [
 MANUAL_TRANSLATIONS_PATH = Path("data/processed/manifests/manual_translations.csv")
 FLEURS_MANIFEST_PATH = Path("data/processed/manifests/fleurs_sample.csv")
 EVALUATION_CSV = Path("data/processed/manifests/evaluation_v1.csv")
+
+FLEURS_EN_TSV_URLS = tuple(
+    "https://huggingface.co/datasets/google/fleurs/resolve/main/"
+    f"data/en_us/{split}.tsv"
+    for split in ("train", "dev", "test")
+)
+FLEURS_TSV_COLUMNS = [
+    "sentence_id",
+    "audio_filename",
+    "raw_transcription",
+    "transcription",
+    "words",
+    "num_samples",
+    "gender",
+]
 
 
 def load_manifest(path: str | Path) -> pd.DataFrame:
@@ -74,6 +91,47 @@ def load_translations_dict(path: str | Path | None = None) -> dict[str, str]:
         if value:
             out[str(row["sample_id"]).strip()] = value
     return out
+
+
+def load_fleurs_english_references(
+    urls: tuple[str, ...] = FLEURS_EN_TSV_URLS,
+) -> dict[str, str]:
+    """Descarga el TSV textual de FLEURS inglés y devuelve ``id -> referencia``.
+
+    No descarga audio inglés. Puede haber varias grabaciones para una misma
+    oración; todas comparten el mismo texto de referencia.
+    """
+    import requests
+
+    references: dict[str, str] = {}
+    for url in urls:
+        response = requests.get(url, timeout=120)
+        response.raise_for_status()
+        frame = pd.read_csv(
+            StringIO(response.text),
+            sep="\t",
+            header=None,
+            names=FLEURS_TSV_COLUMNS,
+            dtype={"sentence_id": str},
+        )
+        for _, row in frame.iterrows():
+            sentence_id = str(row["sentence_id"]).strip()
+            text = str(row["raw_transcription"]).strip()
+            if sentence_id and text and sentence_id not in references:
+                references[sentence_id] = text
+    return references
+
+
+def apply_fleurs_references(
+    manifest: pd.DataFrame, references: dict[str, str]
+) -> pd.DataFrame:
+    """Añade ``translation_en`` mediante el identificador paralelo de FLEURS."""
+    if "sentence_id" not in manifest.columns:
+        raise ValueError("El manifest debe contener 'sentence_id'.")
+    df = manifest.copy()
+    df["sentence_id"] = df["sentence_id"].astype(str)
+    df["translation_en"] = df["sentence_id"].map(references).fillna("")
+    return df
 
 
 def ensure_manual_translations_file(

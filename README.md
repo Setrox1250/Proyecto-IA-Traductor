@@ -17,41 +17,35 @@ Proyecto de IA: traductor con síntesis de voz y clonación de voz.
 
 ## Preparación del dataset
 
-Fase exclusivamente de datos: CoVoST 2 como corpus de traducción e inspección,
-y una pequeña muestra de audio de FLEURS como dataset de evaluación
-Speech-to-Speech (audio + transcripción es + traducción en + split).
+El flujo canónico se ejecuta completo en una sola instancia de Google Colab:
 
-Ejecutar en orden en Google Colab. Cada notebook configura su propio entorno e
-instala sus dependencias; los archivos de datos, sin embargo, son la salida del
-notebook anterior:
+1. Abrir `notebooks/dataset/00_prepare_all_datasets_colab.ipynb`.
+2. Seleccionar **Entorno de ejecución → Ejecutar todas**.
+3. Descargar el ZIP de resultados desde la última celda.
 
-1. `notebooks/dataset/00_inspect_covost2.ipynb` — descarga y explora el metadata de
-   CoVoST 2 es→en (TSV oficial, ~3 MB) sin Common Voice.
-2. `notebooks/dataset/01_sample_fleurs.ipynb` — carga FLEURS `es_419` en streaming,
-   guarda 20 audios WAV en `data/raw/audio/` y genera
-   `data/processed/manifests/fleurs_sample.csv`.
-3. `notebooks/dataset/02_build_evaluation_dataset.ipynb` — añade traducciones de
-   referencia manuales y asigna split dev/test (70/30) → `evaluation_v1.csv`.
-4. `notebooks/dataset/03_validate_dataset.ipynb` — valida audios, textos, duraciones
-   y posibles leakages; genera el reporte en `outputs/dataset/`.
+El notebook contiene directamente el código de procesamiento y clona este
+repositorio público para usarlo como directorio del proyecto en Colab. No monta
+Google Drive ni depende de los módulos locales de `src/`.
+
+El notebook construye dos conjuntos independientes:
+
+- **Dataset A — aprendizaje NMT:** OPUS-100 `en-es`, con 100 000 pares de
+  entrenamiento seleccionados de forma reproducible y los splits oficiales de
+  validación y prueba.
+- **Dataset B — evaluación Speech-to-Speech:** 20 audios de FLEURS `es_419`, con
+  transcripción española y referencia inglesa oficial enlazada mediante el
+  identificador multilingüe de la oración.
+
+Los notebooks numerados `00_inspect_covost2.ipynb` a
+`03_validate_dataset.ipynb` se conservan como exploraciones modulares y registro
+de ejecuciones anteriores. No son necesarios para el flujo canónico.
 
 Detalles de implementación en `src/dataset/` (`covost.py`, `fleurs.py`,
 `manifest.py`, `validation.py`). Los datos generados no se suben al repositorio
 (ver `.gitignore`).
 
-### Google Colab
-
-La primera celda de cada notebook monta Drive y localiza automáticamente una
-carpeta que contenga `src/` y `requirements/dataset.txt`, incluso si está dentro
-de otra carpeta o una unidad compartida. Comprueba la ruta que imprime como
-`PROJECT_ROOT` antes de continuar.
-
-Si existen varias copias o no se localiza el proyecto, asigna la ruta correcta
-en la primera celda, por ejemplo:
-
-```python
-PROJECT_ROOT_OVERRIDE = Path("/content/drive/MyDrive/Curso/IA-Proyecto")
-```
-
-El notebook 02 requiere completar manualmente `manual_translations.csv` antes
-de crear `evaluation_v1.csv`; el 03 requiere que ese archivo ya exista.
+Los artefactos se comprimen como `IA-Proyecto_dataset_artifacts.zip` y se
+descargan directamente desde Colab al finalizar. La implementación está en
+`src/dataset/` (`parallel.py`, `fleurs.py`, `manifest.py`, `validation.py`).
+El resumen numérico de Dataset A se guarda en
+`outputs/dataset/parallel_dataset_summary.csv`.
