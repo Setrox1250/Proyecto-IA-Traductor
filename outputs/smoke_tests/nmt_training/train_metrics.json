@@ -1,0 +1,17 @@
+{
+  "mode": "debug_smoke_test",
+  "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+  "is_cuda": true,
+  "train_samples": 256,
+  "eval_samples": 64,
+  "epochs": 1.0,
+  "max_length": 128,
+  "num_beams": 4,
+  "duration_seconds": 10.82,
+  "peak_vram_mb": 1716.62,
+  "train_loss": 2.2569,
+  "eval_loss": 2.5663,
+  "eval_bleu": 41.63,
+  "eval_chrf": 64.74,
+  "global_step": 32
+}

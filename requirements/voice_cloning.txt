@@ -1,0 +1,12 @@
+# Entorno independiente validado para XTTS-v2 y ECAPA-TDNN (Python 3.11.15).
+# No instalar sobre el runtime ya validado de NMT/Whisper: Coqui TTS necesita
+# transformers 4.57.x, mientras que la resolución libre instaló transformers
+# 5.19.0 e impidió importar XTTS. Crear un entorno virtual separado.
+torch==2.8.0
+torchaudio==2.8.0
+coqui-tts==0.27.5
+transformers==4.57.3
+numpy==2.4.6
+speechbrain==1.1.1
+soundfile==0.14.0
+scipy==1.17.1

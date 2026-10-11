@@ -1,3 +1,6 @@
-model_name: ""
-speaker_embedding: ""
-sample_rate: 22050
+model_name: "coqui/XTTS-v2"
+# Identificador de la API de Coqui TTS que entrega los pesos coqui/XTTS-v2.
+tts_api_model_name: "tts_models/multilingual/multi-dataset/xtts_v2"
+reference_sample_rate: 22050
+expected_output_sample_rate: 24000
+language: "en"

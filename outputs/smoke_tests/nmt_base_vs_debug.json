@@ -1,0 +1,22 @@
+{
+  "disclaimer": "SMOKE TEST COMPARATIVO - ESTAS MÉTRICAS DEMUESTRAN QUE EL FLUJO DE ENTRENAMIENTO Y EVALUACIÓN FUNCIONA. NO REPRESENTAN EL RESULTADO FINAL DEL PROYECTO.",
+  "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+  "eval_samples": 64,
+  "base_model": {
+    "name": "Helsinki-NLP/opus-mt-es-en",
+    "eval_loss": 2.5513,
+    "bleu": 42.33,
+    "chrf": 64.8
+  },
+  "debug_fine_tuned_model": {
+    "name": "Helsinki-NLP/opus-mt-es-en (fine-tuned 256 samples, 1 epoch)",
+    "eval_loss": 2.5663,
+    "bleu": 41.63,
+    "chrf": 64.74
+  },
+  "delta": {
+    "delta_bleu": -0.7,
+    "delta_chrf": -0.06,
+    "delta_loss": 0.015
+  }
+}

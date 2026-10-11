@@ -1,0 +1,45 @@
+{
+  "model_name": "openai/whisper-small",
+  "language": "es",
+  "task": "transcribe",
+  "device": "cuda",
+  "num_samples": 3,
+  "disclaimer": "SMOKE TEST — 3 MUESTRAS. NO ES UNA EVALUACIÓN GLOBAL DE WHISPER.",
+  "summary_metrics": {
+    "mean_wer": 8.59,
+    "mean_cer": 2.59,
+    "mean_inference_time_sec": 2.285
+  },
+  "samples": [
+    {
+      "sample_id": "fleurs_es_419_smoke_00",
+      "audio_file": "outputs/smoke_tests/audio/fleurs_es_419_smoke_00.wav",
+      "duration_sec": 8.88,
+      "inference_time_sec": 6.202,
+      "ground_truth": "Exactamente a las 8:46 a. m., la ciudad se volvió silencio, marcando el preciso instante en el que el primer avión alcanzó su objetivo.",
+      "prediction": "Exactamente a las 8.46 a.m. la ciudad se volvió silencio, marcando de preciso instante en el que el primer avión alcanzó su objetivo.",
+      "wer": 16.67,
+      "cer": 3.7
+    },
+    {
+      "sample_id": "fleurs_es_419_smoke_01",
+      "audio_file": "outputs/smoke_tests/audio/fleurs_es_419_smoke_01.wav",
+      "duration_sec": 8.94,
+      "inference_time_sec": 0.305,
+      "ground_truth": "Por lo general, las hembras se relacionan estrechamente entre sí, lo que las hace una gran familia de hermanas e hijas.",
+      "prediction": "Por lo general, las hembras se relacionan estrechamente entre sí, lo que las hace una gran familia de hermanas e hijas.",
+      "wer": 0.0,
+      "cer": 0.0
+    },
+    {
+      "sample_id": "fleurs_es_419_smoke_02",
+      "audio_file": "outputs/smoke_tests/audio/fleurs_es_419_smoke_02.wav",
+      "duration_sec": 8.64,
+      "inference_time_sec": 0.349,
+      "ground_truth": "Recuerde incluir los gastos adicionales, los impuestos de partida, el transporte terrestre, etc. para todos los lugares que visite fuera de África.",
+      "prediction": "Recuerda incluir los gastos adicionales, los impuestos de partida, el transporte terrestre, etcétera para todos los lugares que visite fuera de África.",
+      "wer": 9.09,
+      "cer": 4.08
+    }
+  ]
+}

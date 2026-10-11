@@ -1,0 +1,40 @@
+{
+  "model_name": "Helsinki-NLP/opus-mt-es-en",
+  "checkpoint": "base",
+  "device": "cuda",
+  "num_samples": 5,
+  "inference_duration_sec": 16.3265,
+  "avg_latency_ms": 3265.31,
+  "smoke_metrics": {
+    "sacrebleu": 36.33,
+    "chrf": 68.82,
+    "disclaimer": "SMOKE TEST - ESTAS MÉTRICAS NO REPRESENTAN LA EVALUACIÓN FINAL DEL MODELO"
+  },
+  "samples": [
+    {
+      "source_es": "Si su país produjo SAO para estos usos, sírvase anotar en la columna 6 del formulario de datos 3 la cantidad correspondiente”.",
+      "reference_en": "If your country produced ODS for this purpose, please enter the amount so produced in column 6 on Data Form 3.”",
+      "prediction_base": "If your country has produced ODS for these uses, please enter the corresponding amount in column 6 of data form 3.”"
+    },
+    {
+      "source_es": "# Juvie el gran hombre, ¿quién podría ser sino yo?",
+      "reference_en": "♪ juvie the great man, who else could it be but I?",
+      "prediction_base": "# Juvie the great man, who could it be but me?"
+    },
+    {
+      "source_es": "El planeta madre se está agotando.",
+      "reference_en": "The home planet is running out.",
+      "prediction_base": "Mother planet's running low."
+    },
+    {
+      "source_es": "Las chicas no matan a sus madres? .",
+      "reference_en": "Oon't girls ever kill their mothers?",
+      "prediction_base": "Girls don't kill their mothers."
+    },
+    {
+      "source_es": "Actividades humanitarias, de recuperación y de desarrollo",
+      "reference_en": "Humanitarian, recovery and development activities",
+      "prediction_base": "Humanitarian, recovery and development activities"
+    }
+  ]
+}
