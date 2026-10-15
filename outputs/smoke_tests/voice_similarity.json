@@ -1,0 +1,23 @@
+[
+  {
+    "sample_id": "fleurs_es_419_dev_00",
+    "cosine_similarity": 0.59917,
+    "duration_original": 9.96,
+    "duration_generated": 7.1473,
+    "XTTS_time": 34.4658
+  },
+  {
+    "sample_id": "fleurs_es_419_dev_01",
+    "cosine_similarity": 0.396744,
+    "duration_original": 9.48,
+    "duration_generated": 7.7447,
+    "XTTS_time": 1.6939
+  },
+  {
+    "sample_id": "fleurs_es_419_dev_02",
+    "cosine_similarity": 0.555145,
+    "duration_original": 13.92,
+    "duration_generated": 19.6807,
+    "XTTS_time": 4.7707
+  }
+]

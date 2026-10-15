@@ -156,3 +156,11 @@ Se añadieron los módulos y notebooks de ejecución para Colab: `notebooks/voic
 La resolución libre con `transformers 5.19.0` **falló**: XTTS no pudo importar `isin_mps_friendly`; por ello no se usa. La ejecución XTTS, ECAPA, pipeline y Gradio en Colab está pendiente y no existen valores de similitud, RTF total ni resultados MOS que puedan reportarse todavía.
 
 La suite de contratos actualizada se ejecutó en el entorno aislado: **13 passed en 3.07 s** (`pytest tests/unit/ tests/integration/`).
+
+### Actualización: ejecución local real en RTX 5060
+
+Esta actualización sustituye el estado pendiente anterior. Se ejecutaron tres muestras FLEURS `es_419` del split oficial `validation` (DEV para este smoke test), con referencia inglesa oficial. XTTS-v2 generó WAV a **24000 Hz** desde referencias mono de **22050 Hz**. Sus tiempos fueron 34.4658 s (primera inferencia con carga), 1.6939 s y 4.7707 s; máximo pico VRAM 2237.45 MB.
+
+ECAPA-TDNN produjo cosenos 0.599170, 0.396744 y 0.555145: media 0.517020, mínimo 0.396744 y máximo 0.599170. N=3 confirma que la métrica compara objetivamente referencia y síntesis; no define porcentaje de conservación vocal.
+
+El pipeline Whisper-small → MarianMT base → XTTS-v2 → ECAPA completó las tres muestras. RTF: 3.9355 en ejecución fría y 0.1937/0.2064 en caliente (media caliente 0.2001). Las similitudes del audio generado por el pipeline fueron 0.547525, 0.341537 y 0.567304. Los artefactos y metadata están en `outputs/smoke_tests/pipeline/`. Gradio 5.49.1 se construyó correctamente como `Blocks`; no hubo despliegue persistente. MOS continúa pendiente.

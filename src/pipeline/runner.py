@@ -125,7 +125,9 @@ def process_audio(input_audio: str, output_dir: str) -> dict:
 
     total_sec = time.perf_counter() - started_at
     metadata = {
-        "sample_id": source.stem,
+        # El directorio de ejecución identifica la muestra incluso si el audio
+        # maestro conserva un sufijo descriptivo como ``_original``.
+        "sample_id": destination.name,
         "input_audio": str(source),
         "models": {
             "asr": "openai/whisper-small",

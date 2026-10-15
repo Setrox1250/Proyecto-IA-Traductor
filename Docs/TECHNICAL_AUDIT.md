@@ -69,6 +69,10 @@ Los módulos de **Voice Cloning (coqui/XTTS-v2)** y **Evaluación Vocal (speechb
 
 Se implementaron los contratos no pesados de XTTS, ECAPA, pipeline y Gradio, además de notebooks ejecutables en Colab. El aislamiento es necesario: la resolución de `coqui-tts==0.27.5` con `transformers==5.19.0` falló al importar XTTS; el runtime aislado probado para importación usa torch/torchaudio 2.8.0+cu128, transformers 4.57.3, numpy 2.4.6 y speechbrain 1.1.1. No se ha registrado inferencia XTTS/ECAPA/pipeline en Colab, por lo que sus estados siguen pendientes de evidencia experimental.
 
+### Actualización de ejecución local (RTX 5060)
+
+XTTS-v2, ECAPA y el pipeline ya cuentan con ejecución real local sobre tres FLEURS DEV. XTTS produjo WAV 24000 Hz con referencias 22050 Hz; ECAPA obtuvo media 0.517020 en su smoke test dedicado. El pipeline completo registró RTF caliente medio 0.2001. Estos resultados son N=3 y se clasifican como **smoke test**, no como evaluación final ni equivalente a resultados Colab.
+
 ---
 
 ## 4. Matriz Comparativa Actualizada

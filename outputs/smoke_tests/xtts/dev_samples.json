@@ -1,0 +1,29 @@
+[
+  {
+    "sample_id": "fleurs_es_419_dev_00",
+    "sentence_id": "1638",
+    "source_audio": "/home/setrox/Projects/University/IA-Proyecto/outputs/smoke_tests/xtts/sources/fleurs_es_419_dev_00_original.wav",
+    "transcription_es": "Es probable que los safaris sean el mayor atractivo turístico de África y la parte más memorable para muchos visitantes.",
+    "text_en": "Safaris are perhaps the greatest tourism draw in Africa and the highlight for many visitors.",
+    "duration_sec": 9.96,
+    "source_split": "google/fleurs es_419 validation"
+  },
+  {
+    "sample_id": "fleurs_es_419_dev_01",
+    "sentence_id": "1658",
+    "source_audio": "/home/setrox/Projects/University/IA-Proyecto/outputs/smoke_tests/xtts/sources/fleurs_es_419_dev_01_original.wav",
+    "transcription_es": "Con solo dieciocho medallas disponibles por día, son varios los países que no han logrado llegar al podio de las medallas.",
+    "text_en": "With only eighteen medals available a day, a number of countries have failed to make the medal podium.",
+    "duration_sec": 9.48,
+    "source_split": "google/fleurs es_419 validation"
+  },
+  {
+    "sample_id": "fleurs_es_419_dev_02",
+    "sentence_id": "1613",
+    "source_audio": "/home/setrox/Projects/University/IA-Proyecto/outputs/smoke_tests/xtts/sources/fleurs_es_419_dev_02_original.wav",
+    "transcription_es": "Además, existen monturas, en especial las inglesas, con barras de seguridad que permiten que el cuero del estribo se desprenda de su estructura si un jinete que sale despedido tira hacia atrás.",
+    "text_en": "Next, some saddles, particularly English saddles, have safety bars that allow a stirrup leather to fall off the saddle if pulled backwards by a falling rider.",
+    "duration_sec": 13.92,
+    "source_split": "google/fleurs es_419 validation"
+  }
+]

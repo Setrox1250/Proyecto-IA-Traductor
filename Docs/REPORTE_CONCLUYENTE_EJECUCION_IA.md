@@ -274,3 +274,7 @@ La IA redactora puede adaptar el siguiente texto para cerrar la sección de resu
 Se añadieron implementaciones y notebooks de Colab para XTTS-v2, ECAPA, pipeline end-to-end y Gradio. El runtime aislado de referencia utiliza Python 3.11.15, torch/torchaudio 2.8.0+cu128, coqui-tts 0.27.5, transformers 4.57.3, speechbrain 1.1.1 y numpy 2.4.6. La combinación se comprobó hasta importación local en GPU; `transformers 5.19.0` no es compatible con XTTS por ausencia de `isin_mps_friendly`.
 
 No se añaden números de XTTS, ECAPA, RTF total o MOS porque aún no se ejecutó el notebook en Colab. La evidencia del pipeline real deberá generarse con los tres DEV y guardarse en `outputs/smoke_tests/xtts/`, `voice_similarity.json` y `outputs/smoke_tests/pipeline/<sample_id>/`.
+
+### Actualización de evidencia local RTX 5060
+
+La ejecución posterior generó tres salidas XTTS a 24000 Hz y calculó ECAPA: 0.599170, 0.396744 y 0.555145 (media 0.517020). El pipeline real produjo RTF 3.9355 en frío y 0.1937/0.2064 en caliente. Estas cifras son smoke test N=3; no constituyen resultado general ni porcentaje de conservación vocal. MOS continúa pendiente y no se han inventado evaluadores.

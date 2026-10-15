@@ -17,7 +17,7 @@ _ENCODER_CACHE: dict[str, Any] = {}
 
 def load_speaker_encoder(device: str | None = None):
     """Carga los pesos preentrenados ECAPA una sola vez por dispositivo."""
-    selected_device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    selected_device = device or ("cuda:0" if torch.cuda.is_available() else "cpu")
     if selected_device not in _ENCODER_CACHE:
         from speechbrain.inference.speaker import EncoderClassifier
 

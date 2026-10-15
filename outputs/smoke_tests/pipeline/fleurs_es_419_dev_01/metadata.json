@@ -1,0 +1,30 @@
+{
+  "sample_id": "fleurs_es_419_dev_01",
+  "input_audio": "/home/setrox/Projects/University/IA-Proyecto/outputs/smoke_tests/xtts/sources/fleurs_es_419_dev_01_original.wav",
+  "models": {
+    "asr": "openai/whisper-small",
+    "translation": "Helsinki-NLP/opus-mt-es-en",
+    "translation_checkpoint": "base",
+    "tts": "coqui/XTTS-v2",
+    "speaker_encoder": "speechbrain/spkrec-ecapa-voxceleb"
+  },
+  "transcription_es": "Con sólo 18 medallas disponibles por día, son varios los países que no han logrado llegar al podio de las medallas.",
+  "translation_en": "With only 18 medals available per day, several countries have failed to reach the medal podium.",
+  "wer": 0.09523809523809523,
+  "speaker_similarity": 0.3415367901325226,
+  "audio": {
+    "input_duration_sec": 9.48,
+    "output_path": "/home/setrox/Projects/University/IA-Proyecto/outputs/smoke_tests/pipeline/fleurs_es_419_dev_01/output.wav",
+    "output_sample_rate": 24000,
+    "output_duration_sec": 6.592666666666666
+  },
+  "timings": {
+    "preprocessing_sec": 0.0156,
+    "asr_sec": 0.2629,
+    "translation_sec": 0.117,
+    "xtts_sec": 1.4138,
+    "speaker_evaluation_sec": 0.0257,
+    "total_sec": 1.8358
+  },
+  "rtf_total": 0.1937
+}
