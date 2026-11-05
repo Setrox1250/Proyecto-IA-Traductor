@@ -1,7 +1,7 @@
 # Índice documental
 
 **Proyecto:** Traducción de Mensajes de Audio con Clonación de Voz mediante Inteligencia Artificial
-**Última actualización:** 2026-11-04
+**Última actualización:** 2026-11-05
 **Run final de referencia:** `outputs/final_eval/master_20261104_082658/`
 **Commit de ejecución registrado:** `e2df5999daf5a0635c8986794742fef35f179b1d` (historial anterior a la limpieza)
 
@@ -22,6 +22,13 @@ Documentos que describen el estado final y deben usarse para el informe y la pub
 | `Docs/REVISION_INFORME_ACADEMICO_FINAL.md` | Revisión orientativa del documento académico I–VI |
 | `Docs/contexto_alcance.md` | Contexto y alcance funcional |
 | `Docs/responsabilidades_modelos.md` | Responsabilidades y estrategia de aprendizaje |
+| `Docs/DEPLOYMENT_IMPLEMENTATION_PLAN.md` | Auditoría y plan de implementación web |
+| `Docs/DEPLOYMENT_GUIDE.md` | Instalación, ejecución, Docker, GPU y troubleshooting |
+| `Docs/API_DOCUMENTATION.md` | Endpoints, contratos, códigos de error y ejemplos |
+| `Docs/END_TO_END_TEST_REPORT.md` | Pruebas de backend, frontend y E2E real |
+| `Docs/DEPLOYMENT_STATUS.md` | Estado local vs. despliegue público |
+| `Docs/DEPLOYMENT_IMPLEMENTATION_REPORT.md` | Informe integral de la implementación |
+| `Docs/deploy_evidence/README.md` | Índice de capturas, logs y artefactos reales |
 | `Docs/auditoria_limpieza/INFORME_LIMPIEZA_REPOSITORIO.md` | Limpieza, consolidación y estado final del repositorio |
 | `THIRD_PARTY_LICENSES.md` | Licencias de terceros (ubicación real en la raíz) |
 
@@ -43,8 +50,10 @@ Documentos que describen el estado final y deben usarse para el informe y la pub
 | `data/processed/manifests/fleurs_evaluation_v2_official_test.csv` | Reserva FLEURS oficial `test` |
 | `models/checkpoints/controlled_10k/` | Checkpoint del experimento 10k (ignorado por Git) |
 | `Docs/auditoria_limpieza/INFORME_LIMPIEZA_REPOSITORIO.md` | Informe de limpieza y estado final |
+| `Docs/deploy_evidence/` | Capturas reales, logs de pruebas, respuesta API y WAV generado |
+| `deploy/frontend/e2e/fixtures/fleurs_es_419_test_0000.wav` | Muestra FLEURS usada en la prueba E2E |
 
-> Los WAV de ejecuciones históricas se retiraron del repositorio. El notebook maestro regenera los artefactos de audio al ejecutarse.
+> Los WAV de ejecuciones históricas se retiraron del repositorio. El notebook maestro regenera los artefactos de audio al ejecutarse. La evidencia web conserva únicamente la muestra FLEURS y el WAV de la prueba E2E.
 
 ---
 
@@ -65,6 +74,9 @@ El estado vigente debe consultarse únicamente en los documentos de la sección 
 | `models/checkpoints/controlled_10k/` | Definir estrategia de distribución (no versionado) |
 | `outputs/final_eval/master_20261104_082658/` | Decidir si se publica como release/artefacto externo |
 | Gradio | Añadir capturas de pantalla y evidencia visual |
+| Web | Capturas de bandeja de descarga y terminales; ver `Docs/deploy_evidence/README.md` |
+| Docker backend | Construir y verificar la imagen en un host con GPU/NVIDIA Container Toolkit |
+| Despliegue público | Pendiente de autorización, proveedor GPU y presupuesto |
 | Licencias | Confirmar model/dataset cards de MarianMT, ECAPA, FLEURS y OPUS-100 |
 | GitHub | Historial reescrito; mantener los artefactos pesados fuera de Git |
 

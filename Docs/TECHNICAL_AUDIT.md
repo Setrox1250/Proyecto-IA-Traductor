@@ -1,3 +1,5 @@
+> **Actualización 2026-11-05:** este documento describe el estado previo a la implementación web. El estado vigente está en `Docs/DEPLOYMENT_STATUS.md`, `Docs/DEPLOYMENT_IMPLEMENTATION_REPORT.md` y `Docs/deploy_evidence/`.
+
 # Auditoría Técnica — Estado Final del Proyecto
 
 **Proyecto:** Traducción de Mensajes de Audio con Clonación de Voz mediante Inteligencia Artificial

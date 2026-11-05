@@ -1,0 +1,15 @@
+npm notice run hilo-mensajeria@1.0.0 npx
+npm notice run 'playwright' test e2e/translator.spec.js
+
+Running 8 tests using 1 worker
+
+  ✓  1 [chromium] › e2e/translator.spec.js:121:1 › muestra la pantalla principal y el estado real del motor (902ms)
+  ✓  2 [chromium] › e2e/translator.spec.js:130:1 › selecciona un audio, lo muestra y habilita la traducción (605ms)
+  ✓  3 [chromium] › e2e/translator.spec.js:139:1 › muestra el procesamiento y luego los resultados reales del contrato (2.1s)
+  ✓  4 [chromium] › e2e/translator.spec.js:157:1 › permite descargar el audio generado (795ms)
+  ✓  5 [chromium] › e2e/translator.spec.js:169:1 › valida la extensión antes de enviar (501ms)
+  ✓  6 [chromium] › e2e/translator.spec.js:177:1 › muestra un error comprensible y permite reintentar (628ms)
+  ✓  7 [chromium] › e2e/translator.spec.js:187:1 › maneja una conexión perdida durante el procesamiento (630ms)
+  ✓  8 [chromium] › e2e/translator.spec.js:200:1 › adaptación móvil sin sidebar (419ms)
+
+  8 passed (7.1s)

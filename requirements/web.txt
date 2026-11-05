@@ -1,0 +1,9 @@
+# Dependencias del backend web. Reutiliza los entornos del pipeline existente.
+-r asr.txt
+-r translation.txt
+-r voice_cloning.txt
+
+# API y multipart
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+python-multipart==0.0.32

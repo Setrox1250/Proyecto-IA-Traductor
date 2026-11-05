@@ -1,0 +1,8 @@
+npm notice run hilo-mensajeria@1.0.0 npx
+npm notice run 'playwright' test e2e/live.spec.js
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › e2e/live.spec.js:10:3 › E2E real con pipeline › sube FLEURS, traduce y descarga el WAV generado (31.0s)
+
+  1 passed (31.4s)

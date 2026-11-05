@@ -1,6 +1,6 @@
 # IA-Proyecto — Traducción ES→EN con clonación de voz zero-shot
 
-Prototipo académico que recibe un mensaje de audio en español y genera una traducción hablada al inglés, usando el mismo audio como referencia vocal:
+Prototipo académico que recibe un mensaje de audio en español y genera una traducción hablada al inglés, usando el mismo audio como referencia vocal. Incluye una **aplicación web funcional** (Expo Web + FastAPI) además del pipeline y la demo Gradio:
 
 ```text
 Audio ES
@@ -35,7 +35,9 @@ El modelo de traducción seleccionado para el pipeline es **MarianMT base** (`He
 | NMT | `Helsinki-NLP/opus-mt-es-en` base | Traducir español a inglés |
 | TTS / clonación | `coqui/XTTS-v2` vía Coqui TTS | Sintetizar inglés con referencia vocal |
 | Evaluación vocal | `speechbrain/spkrec-ecapa-voxceleb` | Embeddings ECAPA y similitud coseno |
-| Interfaz | Gradio 5.49.1 | Demo local |
+| API web | FastAPI 0.143.0 + Uvicorn | Validación, cola secuencial, resultados temporales |
+| Interfaz web | Expo SDK 58 / React Native Web | App funcional responsive |
+| Demo alternativa | Gradio 5.49.1 | Demo local |
 | Evaluación | FLEURS `es_419` | 20 muestras oficiales `test` |
 | Entrenamiento NMT | OPUS-100 | 10 000 pares usados en el experimento controlado |
 
@@ -54,14 +56,16 @@ El modelo de traducción seleccionado para el pipeline es **MarianMT base** (`He
 ```text
 configs/                  Configuración YAML
 data/processed/manifests/ Reserva FLEURS v2 y manifiestos
-Docs/                     Documentación, auditorías e índices
+deploy/backend/           API FastAPI, Dockerfile y configuración
+deploy/frontend/          App Expo Web funcional y pruebas Playwright
+Docs/                     Documentación, guías y evidencias de despliegue
 models/                   Checkpoints locales (no versionados)
 notebooks/                Notebook maestro e históricos
 outputs/                  Resultados de ejecución (no versionados)
-requirements/             Dependencias fijadas
+requirements/             Dependencias fijadas (incluye web.txt)
 scripts/                  Descarga, preparación y evaluación
-src/                      Código fuente
-tests/                    Pruebas unitarias y de contrato
+src/                      Código fuente del pipeline
+tests/                    Pruebas unitarias, integración y API
 ```
 
 ## 4. Requisitos
@@ -69,6 +73,8 @@ tests/                    Pruebas unitarias y de contrato
 - Python 3.11.
 - GPU NVIDIA con CUDA para la ejecución validada.
 - `COQUI_TOS_AGREED=1` para cargar XTTS-v2.
+- ffmpeg y ffprobe para la API web.
+- Node.js 20+ para el frontend Expo Web.
 - Espacio para pesos de modelos y audios de evaluación.
 - Los datasets y pesos **no están incluidos** en el repositorio.
 
@@ -97,6 +103,8 @@ pip install -r requirements/dataset.txt
 pip install -r requirements/asr.txt
 pip install -r requirements/translation.txt
 pip install -r requirements/voice_cloning.txt
+# API web (incluye las dependencias anteriores + FastAPI/Uvicorn):
+pip install -r requirements/web.txt
 ```
 
 Las versiones están fijadas para evitar conflictos entre Coqui TTS, Transformers y PyTorch. Si se resuelven dependencias libremente, puede ser necesario un entorno separado para XTTS.
@@ -173,19 +181,60 @@ result = process_audio(
 
 El valor por defecto es MarianMT base (`configs/translation.yaml`: `use_controlled_checkpoint: false`).
 
-## 8. Aplicación Gradio
+## 8. Aplicación web funcional
+
+La app web reutiliza el pipeline existente. El frontend está en
+`deploy/frontend/` y la API en `deploy/backend/`.
+
+### 8.1 Backend
+
+```bash
+cd deploy/backend
+cp .env.example .env       # ajusta COQUI_TOS_AGREED=1 si aceptas CPML
+./run.sh
+```
+
+API: `http://localhost:8000` · Swagger: `http://localhost:8000/docs`
+
+Endpoints:
+
+- `GET /health`
+- `GET /api/v1/status`
+- `POST /api/v1/translate` (`multipart/form-data`, campo `file`)
+- `GET /api/v1/results/{id}/audio` (reproducción/descarga con TTL)
+
+La inferencia es secuencial y los resultados expiran (1 hora por defecto). No se
+usa base de datos.
+
+### 8.2 Frontend
+
+```bash
+cd deploy/frontend
+npm install
+npm run web
+```
+
+Abre `http://localhost:8081`. Para un dispositivo en la misma red:
+
+```bash
+EXPO_PUBLIC_API_URL=http://<IP-LAN>:8000 npm run web
+```
+
+Funcionalidades: selección de audio, validaciones, estado del motor,
+procesamiento con aviso de primera carga, transcripción ES, traducción EN,
+reproductor real y descarga del WAV. Build estático: `npm run build:web`.
+
+### 8.3 Gradio (alternativa)
 
 ```bash
 python -m src.pipeline.demo
 ```
 
-La demo:
+Se conserva como demo local del pipeline. La app web es la interfaz principal de
+esta entrega.
 
-- carga un audio,
-- ejecuta el pipeline,
-- muestra transcripción, traducción, audio generado, tiempo y similitud ECAPA.
-
-Fue ejecutada localmente. **No hay despliegue público.** La carpeta `deploy/frontend/` es una maqueta visual Expo independiente y **no está integrada** con el pipeline.
+**No hay despliegue público.** El estado exacto está en
+`Docs/DEPLOYMENT_STATUS.md`.
 
 ## 9. Evaluación final FLEURS
 
@@ -252,18 +301,28 @@ El checkpoint **no mejoró** al base. Por eso el pipeline conserva MarianMT base
 ## 11. Pruebas
 
 ```bash
-python -m pytest tests/ -q -p no:cacheprovider
-ruff check src scripts tests --no-cache
+# Backend y pipeline (rápidas, sin cargar modelos)
+python -m pytest tests/unit tests/integration tests/api -q
+
+# Frontend (API interceptada)
+cd deploy/frontend
+npx playwright test e2e/translator.spec.js
+
+# E2E real (requiere backend, GPU y licencia CPML)
+E2E_LIVE=1 npx playwright test e2e/live.spec.js
 ```
 
 Resultado de la validación final:
 
-- **17 pruebas aprobadas**.
-- 0 fallidas.
-- 0 omitidas.
-- **Ruff: All checks passed**.
+- **33 pruebas Python aprobadas** (17 existentes + 16 de API).
+- **8 pruebas Playwright de UI aprobadas**.
+- **1 prueba E2E real aprobada** con FLEURS `es_419`.
+- Build web estático correcto.
+- Imagen Docker del frontend construida correctamente.
+- Las pruebas rápidas no descargan modelos pesados; el E2E real usa la GPU y los
+  pesos cacheados.
 
-Las pruebas no descargan modelos pesados; usan mocks y contratos. La verificación con modelos reales se realizó con el notebook maestro y la evaluación final.
+Detalle: `Docs/END_TO_END_TEST_REPORT.md` y `Docs/deploy_evidence/`.
 
 ## 12. Notebook maestro
 
@@ -285,9 +344,13 @@ Las pruebas no descargan modelos pesados; usan mocks y contratos. La verificaci�
 - FLEURS no expone `speaker_id`; no se puede medir leakage de hablante.
 - Los CSV de OPUS-100 no están incluidos; el experimento 10k requiere regenerarlos.
 - El checkpoint 10k no está versionado.
-- No hay despliegue público, monitoreo, CI/CD ni prueba de concurrencia.
-- No hay capturas de pantalla de Gradio en el repositorio.
-- La maqueta Expo no está integrada.
+- No hay despliegue público, monitoreo, autenticación ni CI/CD.
+- La inferencia es secuencial; no hay cola persistente ni concurrencia segura.
+- No hay grabación de micrófono en la interfaz web (sí selección de archivo).
+- La reproducción en Expo Go nativo no se revalidó en dispositivo físico.
+- La inferencia GPU dentro de Docker no se revalidó; la imagen backend y el
+  proxy Nginx se validaron en CPU.
+- Detalle: `Docs/DEPLOYMENT_STATUS.md` y `Docs/deploy_evidence/README.md`.
 
 ## 14. Licencias
 
@@ -304,6 +367,13 @@ La licencia MIT del código **no cubre** los pesos de XTTS-v2 ni los datasets. V
 ## 15. Documentación complementaria
 
 - `Docs/INDEX.md` — índice y clasificación documental.
+- `Docs/DEPLOYMENT_IMPLEMENTATION_PLAN.md` — plan y auditoría inicial.
+- `Docs/DEPLOYMENT_GUIDE.md` — instalación, ejecución, Docker y GPU.
+- `Docs/API_DOCUMENTATION.md` — endpoints, contratos y errores.
+- `Docs/END_TO_END_TEST_REPORT.md` — pruebas y resultados reales.
+- `Docs/DEPLOYMENT_STATUS.md` — qué está y qué no está desplegado.
+- `Docs/DEPLOYMENT_IMPLEMENTATION_REPORT.md` — informe integral.
+- `Docs/deploy_evidence/` — capturas, logs y artefactos reales.
 - `Docs/TECHNICAL_AUDIT.md` — estado técnico consolidado.
 - `Docs/REPORTE_DATASET_B_FINAL.md` — evaluación final FLEURS.
 - `Docs/NMT_CONTROLLED_EXPERIMENT_10K.md` — experimento NMT y decisión de usar base.

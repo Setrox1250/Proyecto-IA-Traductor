@@ -39,13 +39,18 @@ outputs/final_eval/
 # Entregables y artefactos locales
 *.zip
 .aider.*
+.playwright-mcp/
+test-results/
+playwright-report/
 
-# Maqueta frontend independiente (no forma parte del pipeline Python)
-deploy/
+# Datos temporales del backend web
+deploy/backend/.data/
 
 # Config y secretos
 .env
 .env.*
+!deploy/backend/.env.example
+!deploy/frontend/.env.example
 *.key
 *.pem
 *.crt
@@ -56,6 +61,7 @@ secrets/
 # Temporales y editores
 *.tmp
 *.log
+!Docs/deploy_evidence/logs/*.log
 *.bak
 *.orig
 *.rej

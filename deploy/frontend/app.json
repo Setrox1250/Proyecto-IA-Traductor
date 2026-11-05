@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Hilo",
+    "slug": "hilo-mensajeria",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false
+    },
+    "plugins": [
+      "expo-audio",
+      "expo-asset"
+    ]
+  }
+}

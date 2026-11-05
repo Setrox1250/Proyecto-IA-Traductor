@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/backend/Dockerfile
+    image: hilo-backend:local
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8000
+      RESULT_DIR: /app/deploy/backend/.data/results
+    volumes:
+      - hilo_hf_cache:/root/.cache/huggingface
+      - hilo_tts_cache:/root/.local/share/tts
+      - hilo_results:/app/deploy/backend/.data
+    ports:
+      - "8000:8000"
+    shm_size: "4gb"
+    gpus: all
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        EXPO_PUBLIC_API_URL: ""
+    image: hilo-frontend:local
+    ports:
+      - "8088:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  hilo_hf_cache:
+  hilo_tts_cache:
+  hilo_results:
