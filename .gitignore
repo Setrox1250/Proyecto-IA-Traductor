@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.venv-*/
+venv/
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.cache/
+
+# Datos
+data/raw/audio/*
+data/raw/metadata/*
+data/processed/audio/*
+data/processed/manifests/*
+data/processed/translation/
+data/external/**/*
+!data/**/.gitkeep
+!data/**/README.md
+!data/processed/manifests/fleurs_evaluation_v2_official_test.csv
+
+# Modelos
+models/checkpoints/*
+models/fine_tuned/*
+!models/README.md
+
+# Outputs y artefactos de ejecución
+outputs/*
+outputs/comprobacion/
+outputs/master_colab/
+outputs/final_eval/
+!outputs/**/.gitkeep
+
+# Entregables y artefactos locales
+*.zip
+.aider.*
+
+# Maqueta frontend independiente (no forma parte del pipeline Python)
+deploy/
+
+# Config y secretos
+.env
+.env.*
+*.key
+*.pem
+*.crt
+*.p12
+secrets/
+!configs/*.yaml
+
+# Temporales y editores
+*.tmp
+*.log
+*.bak
+*.orig
+*.rej
+*~
+.vscode/
+.idea/
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Aviso: no subir checkpoints ni audios grandes al repositorio.
+# Para datos/muestras de ejemplo, usar archivos de tamaño reducido o LFS.

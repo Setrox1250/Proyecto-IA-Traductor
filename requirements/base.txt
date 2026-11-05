@@ -1,0 +1,6 @@
+# Núcleo numérico y utilidades comunes. Versiones verificadas en el entorno local.
+torch==2.8.0
+torchaudio==2.8.0
+numpy==2.4.6
+pyyaml==6.0.3
+huggingface-hub==0.36.2

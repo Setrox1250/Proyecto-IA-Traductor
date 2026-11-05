@@ -1,0 +1,7 @@
+# Dependencias de la fase de datos (notebooks dataset/*)
+-r base.txt
+datasets==3.6.0
+pandas==2.3.3
+soundfile==0.14.0
+requests==2.34.2
+tqdm==4.70.1

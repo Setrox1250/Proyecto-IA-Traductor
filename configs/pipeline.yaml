@@ -1,0 +1,4 @@
+stages:
+  - asr
+  - translation
+  - voice_cloning

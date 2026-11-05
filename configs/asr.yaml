@@ -1,0 +1,5 @@
+model_name: "openai/whisper-small"
+sample_rate: 16000
+batch_size: 8
+language: "es"
+task: "transcribe"

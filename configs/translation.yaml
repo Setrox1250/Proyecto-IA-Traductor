@@ -1,0 +1,11 @@
+model_name: "Helsinki-NLP/opus-mt-es-en"
+source_lang: "es"
+target_lang: "en"
+max_length: 128  # Determinado empíricamente (p99 <= 76 tokens; cobertura > 99.89%)
+num_beams: 4     # Hiperparámetro inicial provisional de generación
+seed: 42
+
+# El pipeline productivo usa MarianMT base. El checkpoint de 10 000 pares se
+# conserva como experimento controlado, pero obtuvo BLEU/chrF inferiores.
+use_controlled_checkpoint: false
+checkpoint_path: "models/checkpoints/controlled_10k"

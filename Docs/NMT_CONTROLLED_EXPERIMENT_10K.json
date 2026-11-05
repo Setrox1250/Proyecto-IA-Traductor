@@ -1,0 +1,39 @@
+{
+  "experiment": "MarianMT controlled fine-tuning, 10000 pairs, 1 epoch",
+  "source_commit": "c8041497cd7d194eb5d1417f7f8d8b5f2cda273c",
+  "source_note": "Los artefactos originales de esta ejecución se retiraron del repositorio durante la limpieza; los valores se conservan en este archivo.",
+  "training": {
+    "train_available": 100000,
+    "train_used": 10000,
+    "validation_used": 1000,
+    "test_pairs": 1999,
+    "epochs": 1,
+    "learning_rate": 5e-05,
+    "weight_decay": 0.01,
+    "label_smoothing": 0.1,
+    "fp16": true,
+    "optimizer": "AdamW",
+    "num_beams": 4,
+    "max_length": 128,
+    "seed": 42,
+    "training_seconds": 101.19395739199899,
+    "training_loss": 2.6417119506835935,
+    "peak_vram_gib": 2.7130346298217773
+  },
+  "base": {
+    "sacrebleu": 43.41404070384744,
+    "chrf": 64.41794090380921,
+    "eval_loss": 1.3532423862823528
+  },
+  "controlled": {
+    "sacrebleu": 42.64991733706955,
+    "chrf": 63.667354828760466,
+    "eval_loss": 1.4046608037083574
+  },
+  "delta": {
+    "sacrebleu": -0.76412336677789,
+    "chrf": -0.75058607504874,
+    "eval_loss": 0.051418417425995
+  },
+  "decision": "Use MarianMT base in the pipeline; do not present the controlled checkpoint as an improvement."
+}

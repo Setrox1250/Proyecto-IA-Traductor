@@ -1,0 +1,16 @@
+# Dependencias validadas para XTTS-v2 y ECAPA-TDNN (Python 3.11.15).
+# Instalar con estas versiones fijadas. No dejar que pip resuelva libremente:
+# transformers 5.x puede impedir la importación de XTTS.
+# Si se reutiliza un entorno NMT/ASR existente, verificar compatibilidad.
+torch==2.8.0
+torchaudio==2.8.0
+coqui-tts==0.27.5
+transformers==4.57.3
+numpy==2.4.6
+speechbrain==1.1.1
+soundfile==0.14.0
+scipy==1.17.1
+librosa==0.11.0
+matplotlib==3.11.2
+huggingface-hub==0.36.2
+gradio==5.49.1
