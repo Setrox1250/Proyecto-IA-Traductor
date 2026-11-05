@@ -359,7 +359,8 @@ No se incluyeron capturas simuladas.
 ## 18. Estado de Git
 
 - Rama: `feature/web-deployment`.
-- Cambios de implementación **sin commit** al cierre de este informe.
+- Commit de implementación: `021379c` (`feat: integrate web app with AI pipeline and deployment setup`).
+- Árbol de trabajo limpio tras el commit documental final.
 - No se reescribió el historial.
 - No se hizo `push --force`.
 - No se realizó despliegue público.
