@@ -1,0 +1,45 @@
+VERIFICACIÓN FINAL DE LA LIMPIEZA PROFUNDA — 2026-11-04
+
+Remoto: https://github.com/Setrox1250/Proyecto-IA-Traductor.git
+Rama: main
+
+Commit base del estado limpiado (historial nuevo):
+  5b5551e0a9fd9186e1b8282e56218a7b8911b40f
+Árbol Git:
+  8cdf196e3256f0b27bb52339ac4d7026415373b6
+
+Historial:
+  Un único commit base. Este archivo se añade en un commit de verificación
+  posterior. El HEAD final se obtiene con: git rev-parse HEAD
+
+Estado del repositorio:
+  - Archivos rastreados: 98
+  - Tamaño del árbol rastreado: ~3.52 MB
+  - Tamaño de .git tras la purga: ~1.9 MB
+  - Objetos alcanzables: 109
+  - Referencias Cline eliminadas
+
+Validaciones ejecutadas:
+  - pytest: 17 passed
+  - ruff: All checks passed
+  - Notebook maestro: 22 celdas, 10 de código, 10 ejecutadas, 0 errores
+  - Enlaces locales en Markdown: 0 rotos
+  - Métricas finales: coinciden con los JSON oficiales
+
+Hashes de integridad:
+  c6a3ecaf74e5bea801d055d107bf1afc8829dfcbd47b4f478789f91e901c0bfb  notebooks/Proyecto_IA_Traductor_MASTER_COLAB.ipynb
+  831ac4db2170d79d3d71c01f8e3fa38eb43cce24825620459307745404b4630d  data/processed/manifests/fleurs_evaluation_v2_official_test.csv
+  483d0a034f8e74f7c70985722acabbbc97a12b78a938506358043cbcb4a80475  outputs/final_eval/master_20261104_082658/datasetB/aggregate_metrics.json
+  f5120a483df6f79ce4c0f22769590398b8a5cd1ad310980e5cd0d4e1ff434d6c  outputs/final_eval/master_20261104_082658/datasetB/results_per_sample.csv
+  91324a018bbf0d49a5f58d3290612957b172721889a88eec32a402060af1b7a9  models/checkpoints/controlled_10k/model.safetensors
+
+Respaldo del historial anterior:
+  /home/setrox/ia-proyecto-backups/deep_cleanup_20261104_221050/
+  SHA-256 verificados con sha256sum -c y bundle verificado con git bundle verify.
+
+Comandos de comprobación:
+  git ls-remote origin refs/heads/main
+  git rev-parse HEAD
+  git rev-list --left-right --count origin/main...main
+  git log --oneline --all
+  du -sh .git
