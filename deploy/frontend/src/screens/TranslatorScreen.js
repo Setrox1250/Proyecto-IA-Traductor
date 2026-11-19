@@ -8,31 +8,27 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 
 import { translateAudio } from '../api/client';
-import useEngineStatus from '../hooks/useEngineStatus';
-import { colors, fonts, shadows } from '../theme';
-import {
-  DEFAULT_MAX_AUDIO_SECONDS,
-  DEFAULT_MAX_UPLOAD_MB,
-  formatBytes,
-  formatDuration,
-  getAudioDuration,
-  validateAudioFile,
-} from '../utils/audio';
 import BrandMark from '../components/BrandMark';
-import ChatPattern from '../components/ChatPattern';
 import EngineStatusPill from '../components/EngineStatusPill';
 import ErrorBubble from '../components/ErrorBubble';
 import FileDropCard from '../components/FileDropCard';
 import ProcessingBubble from '../components/ProcessingBubble';
 import ResultCard from '../components/ResultCard';
 import SelectedAudioBubble from '../components/SelectedAudioBubble';
-import TranslatorSidebar from '../components/TranslatorSidebar';
+import useEngineStatus from '../hooks/useEngineStatus';
+import { colors, fonts, shadows } from '../theme';
+import {
+  DEFAULT_MAX_AUDIO_SECONDS,
+  DEFAULT_MAX_UPLOAD_MB,
+  formatDuration,
+  getAudioDuration,
+  validateAudioFile,
+} from '../utils/audio';
 
 const AUDIO_TYPES = [
   'audio/wav',
@@ -44,23 +40,63 @@ const AUDIO_TYPES = [
   'audio/*',
 ];
 
-function AssistantAvatar() {
-  return (
-    <LinearGradient
-      colors={['#16766A', '#073E38']}
-      style={styles.botAvatar}
-    >
-      <Ionicons name="sparkles" size={12} color={colors.white} />
-    </LinearGradient>
-  );
+function StatusNotice({ status, statusError }) {
+  if (statusError) {
+    return (
+      <View style={[styles.notice, styles.noticeError]} accessibilityRole="alert">
+        <Ionicons name="cloud-offline-outline" size={18} color={colors.danger} />
+        <View style={styles.noticeCopy}>
+          <Text style={styles.noticeTitle}>Motor no disponible</Text>
+          <Text style={styles.noticeText}>
+            No se pudo consultar el servicio. Puedes elegir un archivo, pero no lo envíes
+            hasta que el estado vuelva a estar disponible.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (status?.status === 'degraded') {
+    return (
+      <View style={[styles.notice, styles.noticeWarning]} accessibilityRole="alert">
+        <Ionicons name="warning-outline" size={18} color="#A4682C" />
+        <View style={styles.noticeCopy}>
+          <Text style={styles.noticeTitle}>Motor degradado</Text>
+          <Text style={styles.noticeText}>
+            XTTS-v2 no está habilitado. El operador debe aceptar la licencia CPML antes de
+            poder generar el WAV en inglés.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (status?.pipeline?.busy) {
+    return (
+      <View style={[styles.notice, styles.noticeBusy]}>
+        <ActivityIndicator size="small" color={colors.primary} />
+        <View style={styles.noticeCopy}>
+          <Text style={styles.noticeTitle}>El motor está procesando</Text>
+          <Text style={styles.noticeText}>
+            La GPU procesa una solicitud a la vez. Espera a que termine antes de enviar un
+            nuevo audio.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  return null;
 }
 
 export default function TranslatorScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const isDesktop = width >= 980;
+  const isWide = width >= 760;
   const scrollRef = useRef(null);
   const durationRequest = useRef(0);
+  const activeRequest = useRef(false);
+  const objectUrl = useRef(null);
 
   const {
     status,
@@ -68,9 +104,9 @@ export default function TranslatorScreen() {
     loading: statusLoading,
     refresh: refreshStatus,
   } = useEngineStatus();
-
   const [selectedFile, setSelectedFile] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const [picking, setPicking] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -81,62 +117,71 @@ export default function TranslatorScreen() {
     maxAudioSeconds: status?.limits?.max_audio_seconds ?? DEFAULT_MAX_AUDIO_SECONDS,
   };
 
+  const releaseObjectUrl = () => {
+    if (objectUrl.current && typeof URL !== 'undefined') {
+      URL.revokeObjectURL(objectUrl.current);
+      objectUrl.current = null;
+    }
+  };
+
+  useEffect(() => () => releaseObjectUrl(), []);
+
   useEffect(() => {
     if (!isProcessing) return undefined;
     const started = Date.now();
-    const timer = setInterval(() => {
-      setElapsed((Date.now() - started) / 1000);
-    }, 1000);
+    const timer = setInterval(() => setElapsed((Date.now() - started) / 1000), 1000);
     return () => clearInterval(timer);
   }, [isProcessing]);
 
   useEffect(() => {
     if (!result && !isProcessing && !error) return undefined;
-    const timer = setTimeout(() => {
-      scrollRef.current?.scrollToEnd({ animated: true });
-    }, 140);
+    const timer = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
     return () => clearTimeout(timer);
   }, [result, isProcessing, error]);
 
-  const applyPickedAsset = async (asset) => {
+  const applyPickedAsset = async (asset, { fromDrop = false } = {}) => {
+    if (!asset || isProcessing || isValidating) return;
     const candidate = {
       uri: asset.uri,
       name: asset.name,
       size: asset.size,
-      mimeType: asset.mimeType,
+      mimeType: asset.mimeType || asset.type,
       file: asset.file,
       durationSec: null,
     };
     const validation = validateAudioFile(candidate, limits);
     if (!validation.ok) {
+      if (fromDrop) releaseObjectUrl();
       setError({ message: validation.message, code: 'client_validation' });
       return;
     }
 
-    setSelectedFile(candidate);
+    durationRequest.current += 1;
+    const requestId = durationRequest.current;
+    setIsValidating(true);
+    setSelectedFile(null);
     setResult(null);
     setError(null);
     setElapsed(0);
 
-    const requestId = durationRequest.current + 1;
-    durationRequest.current = requestId;
-    const duration = await getAudioDuration(asset.uri);
-    if (!duration || durationRequest.current !== requestId) return;
+    const duration = await getAudioDuration(candidate.uri);
+    if (durationRequest.current !== requestId) return;
 
     const updated = { ...candidate, durationSec: duration };
     const durationValidation = validateAudioFile(updated, limits);
     if (!durationValidation.ok) {
-      setSelectedFile(null);
+      if (fromDrop) releaseObjectUrl();
       setError({ message: durationValidation.message, code: 'client_validation' });
+      setIsValidating(false);
       return;
     }
-    setSelectedFile((current) =>
-      current && current.uri === candidate.uri ? updated : current,
-    );
+
+    setSelectedFile(updated);
+    setIsValidating(false);
   };
 
   const handlePick = async () => {
-    if (isProcessing || picking) return;
+    if (isProcessing || isValidating || picking) return;
     setPicking(true);
     try {
       const selection = await DocumentPicker.getDocumentAsync({
@@ -146,6 +191,7 @@ export default function TranslatorScreen() {
         base64: false,
       });
       if (!selection.canceled && selection.assets?.[0]) {
+        releaseObjectUrl();
         await applyPickedAsset(selection.assets[0]);
       }
     } catch {
@@ -158,8 +204,26 @@ export default function TranslatorScreen() {
     }
   };
 
+  const handleDrop = async (file) => {
+    if (!file || isProcessing || isValidating) return;
+    releaseObjectUrl();
+    const uri = URL.createObjectURL(file);
+    objectUrl.current = uri;
+    await applyPickedAsset(
+      {
+        uri,
+        name: file.name,
+        size: file.size,
+        mimeType: file.type,
+        file,
+      },
+      { fromDrop: true },
+    );
+  };
+
   const handleProcess = async () => {
-    if (!selectedFile || isProcessing) return;
+    if (!selectedFile || isProcessing || isValidating || activeRequest.current) return;
+    activeRequest.current = true;
     setIsProcessing(true);
     setResult(null);
     setError(null);
@@ -170,13 +234,12 @@ export default function TranslatorScreen() {
       refreshStatus();
     } catch (requestError) {
       setError({
-        message:
-          requestError?.message ||
-          'No se pudo procesar el audio. Inténtalo nuevamente.',
+        message: requestError?.message || 'No se pudo procesar el audio. Inténtalo nuevamente.',
         code: requestError?.code || 'request_failed',
         requestId: requestError?.requestId,
       });
     } finally {
+      activeRequest.current = false;
       setIsProcessing(false);
     }
   };
@@ -184,81 +247,36 @@ export default function TranslatorScreen() {
   const handleReset = () => {
     if (isProcessing) return;
     durationRequest.current += 1;
+    releaseObjectUrl();
     setSelectedFile(null);
     setResult(null);
     setError(null);
     setElapsed(0);
-    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    setIsValidating(false);
   };
 
-  const primaryAction = () => {
-    if (isProcessing) return undefined;
-    if (!selectedFile || result) return handlePick;
-    return handleProcess;
-  };
-
-  const primaryLabel = isProcessing
-    ? 'Procesando'
-    : result
-      ? 'Nuevo audio'
-      : selectedFile
-        ? 'Traducir'
-        : 'Elegir audio';
-
-  const primaryIcon = isProcessing
-    ? null
-    : result
-      ? 'add'
-      : selectedFile
-        ? 'send'
-        : 'folder-open-outline';
-
-  const showDropCard = !selectedFile && !isProcessing;
+  const processingBlocked = isProcessing || isValidating || picking;
+  const engineAccepting = Boolean(status?.pipeline?.ready) && !status?.pipeline?.busy;
+  const canTranslate = Boolean(selectedFile) && !processingBlocked && engineAccepting;
 
   return (
     <View style={styles.root}>
-      <View style={styles.ambientOne} />
-      <View style={styles.ambientTwo} />
-
-      <View
-        style={[
-          styles.shell,
-          isDesktop ? styles.shellDesktop : styles.shellMobile,
-          { paddingTop: isDesktop ? 18 : 0, paddingBottom: isDesktop ? 18 : 0 },
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: Math.max(insets.top, 20), paddingBottom: Math.max(insets.bottom, 24) },
         ]}
+        showsVerticalScrollIndicator={false}
       >
-        {isDesktop ? (
-          <TranslatorSidebar
-            status={status}
-            statusError={statusError}
-            statusLoading={statusLoading}
-            onRefreshStatus={refreshStatus}
-            limits={limits}
-          />
-        ) : null}
-
-        <View style={[styles.panel, isDesktop && styles.panelDesktop]}>
-          <View
-            style={[
-              styles.panelHeader,
-              {
-                paddingTop: isDesktop ? 13 : insets.top + 9,
-              },
-            ]}
-          >
-            <BrandMark size={isDesktop ? 38 : 36} />
-            <View style={styles.identity}>
-              <View style={styles.nameRow}>
-                <Text style={styles.name}>Hilo</Text>
-                <View style={styles.direction}>
-                  <Text style={styles.directionText}>ES → EN</Text>
-                </View>
+        <View style={styles.shell}>
+          <View style={styles.header}>
+            <View style={styles.brandRow}>
+              <BrandMark size={44} />
+              <View style={styles.brandCopy}>
+                <Text style={styles.brand}>Hilo Audio</Text>
+                <Text style={styles.brandSub}>TRADUCCIÓN DE AUDIO · ES → EN</Text>
               </View>
-              <Text style={styles.subtitle}>
-                {isDesktop
-                  ? 'Whisper Small · MarianMT · XTTS-v2'
-                  : 'Traductor de voz español → inglés'}
-              </Text>
             </View>
             <EngineStatusPill
               status={status}
@@ -268,538 +286,172 @@ export default function TranslatorScreen() {
             />
           </View>
 
-          <View style={styles.chatArea}>
-            <ChatPattern />
-            <ScrollView
-              ref={scrollRef}
-              style={styles.scroll}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
-            >
-              <View style={styles.thread}>
-                <View style={styles.dateChip}>
-                  <Ionicons name="lock-closed" size={9} color={colors.inkSoft} />
-                  <Text style={styles.dateText}>TRADUCCIÓN PRIVADA · ES → EN</Text>
+          <View style={[styles.hero, isWide && styles.heroWide]}>
+            <View style={styles.heroCopy}>
+              <Text style={styles.eyebrow}>UNA TAREA, UN RESULTADO</Text>
+              <Text style={styles.title}>Traduce un audio en español al inglés.</Text>
+              <Text style={styles.lead}>
+                Sube una grabación. El sistema transcribe, traduce y genera un WAV en inglés
+                condicionado por el audio de referencia.
+              </Text>
+            </View>
+            <View style={styles.flow} accessibilityLabel="Flujo de procesamiento">
+              {['Audio ES', 'Transcripción', 'Traducción EN', 'WAV EN'].map((item, index) => (
+                <View key={item} style={styles.flowItem}>
+                  <Text style={styles.flowText}>{item}</Text>
+                  {index < 3 ? <Ionicons name="arrow-forward" size={13} color={colors.inkFaint} /> : null}
                 </View>
-
-                <View style={styles.assistantRow}>
-                  <AssistantAvatar />
-                  <View style={styles.assistantBubble}>
-                    <Text style={styles.welcomeTitle}>Hola, soy Hilo.</Text>
-                    <Text style={styles.welcomeText}>
-                      Sube una nota de voz en español. La escucharé, la traduciré
-                      al inglés y generaré una nueva voz con tu referencia.
-                    </Text>
-                    <View style={styles.modelChips}>
-                      {['Whisper', 'MarianMT', 'XTTS-v2'].map((model) => (
-                        <View key={model} style={styles.modelChip}>
-                          <Text style={styles.modelChipText}>{model}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                </View>
-
-                {status?.status === 'degraded' ? (
-                  <View style={styles.warning}>
-                    <Ionicons name="warning-outline" size={14} color="#A4682C" />
-                    <Text style={styles.warningText}>
-                      El motor está en modo degradado: XTTS-v2 no está habilitado.
-                      El operador debe aceptar la licencia CPML.
-                    </Text>
-                  </View>
-                ) : null}
-
-                {showDropCard ? (
-                  <View style={styles.dropWrap}>
-                    <FileDropCard
-                      onPick={handlePick}
-                      picking={picking}
-                      maxUploadMb={limits.maxUploadMb}
-                      maxAudioSeconds={limits.maxAudioSeconds}
-                    />
-                  </View>
-                ) : null}
-
-                {selectedFile ? (
-                  <View style={styles.userRow}>
-                    <SelectedAudioBubble
-                      file={selectedFile}
-                      onRemove={handleReset}
-                      disabled={isProcessing}
-                    />
-                  </View>
-                ) : null}
-
-                {isProcessing ? (
-                  <View style={styles.assistantRow}>
-                    <AssistantAvatar />
-                    <View style={styles.assistantContent}>
-                      <ProcessingBubble elapsedSeconds={elapsed} />
-                    </View>
-                  </View>
-                ) : null}
-
-                {error ? (
-                  <View style={styles.assistantRow}>
-                    <AssistantAvatar />
-                    <View style={styles.assistantContent}>
-                      <ErrorBubble
-                        message={error.message}
-                        requestId={error.requestId}
-                        onRetry={
-                          selectedFile && !isProcessing ? handleProcess : undefined
-                        }
-                      />
-                    </View>
-                  </View>
-                ) : null}
-
-                {result ? (
-                  <View style={styles.assistantRow}>
-                    <AssistantAvatar />
-                    <View style={styles.assistantContent}>
-                      <ResultCard result={result} />
-                    </View>
-                  </View>
-                ) : null}
-
-                {result ? (
-                  <View style={styles.endNote}>
-                    <Ionicons name="time-outline" size={10} color={colors.inkFaint} />
-                    <Text style={styles.endNoteText}>
-                      Resultado temporal. El audio se elimina al expirar.
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            </ScrollView>
+              ))}
+            </View>
           </View>
 
-          <View
-            style={[
-              styles.composer,
-              { paddingBottom: Math.max(insets.bottom, 10) },
-            ]}
-          >
-            <View style={styles.composerInner}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Adjuntar archivo de audio"
-                onPress={handlePick}
-                disabled={isProcessing || picking}
-                style={({ pressed }) => [
-                  styles.attach,
-                  pressed && styles.pressed,
-                  (isProcessing || picking) && styles.disabled,
-                ]}
-              >
-                {picking ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
-                ) : (
-                  <Ionicons name="add" size={23} color={colors.primary} />
-                )}
-              </Pressable>
+          <StatusNotice status={status} statusError={statusError} />
 
-              <View style={styles.composerPill}>
-                <View style={styles.composerCopy}>
-                  <Text numberOfLines={1} style={styles.composerTitle}>
-                    {isProcessing
-                      ? 'Procesando audio…'
-                      : result
-                        ? 'Traducción lista'
-                        : selectedFile
-                          ? selectedFile.name
-                          : 'Adjunta una nota de voz'}
-                  </Text>
-                  <Text numberOfLines={1} style={styles.composerSubtitle}>
-                    {isProcessing
-                      ? 'Puede tardar la primera vez'
-                      : result
-                        ? 'Escucha o descarga el resultado'
-                        : selectedFile
-                          ? `${formatBytes(selectedFile.size)}${
-                              selectedFile.durationSec
-                                ? ` · ${formatDuration(selectedFile.durationSec)}`
-                                : ''
-                            }`
-                          : isDesktop
-                            ? `WAV, MP3, M4A, OGG, FLAC o WEBM · máx. ${limits.maxUploadMb} MB`
-                            : `WAV, MP3… · máx. ${limits.maxUploadMb} MB`}
-                  </Text>
-                </View>
-                {selectedFile && !isProcessing && !result ? (
+          {!selectedFile && !isProcessing && !result ? (
+            <FileDropCard
+              onPick={handlePick}
+              onDrop={handleDrop}
+              picking={picking}
+              disabled={isValidating}
+              maxUploadMb={limits.maxUploadMb}
+              maxAudioSeconds={limits.maxAudioSeconds}
+            />
+          ) : null}
+
+          {isValidating ? (
+            <View style={styles.validating} accessibilityRole="status">
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.validatingText}>Verificando formato, peso y duración del audio…</Text>
+            </View>
+          ) : null}
+
+          {selectedFile ? (
+            <View style={styles.selectedSection}>
+              <SelectedAudioBubble file={selectedFile} onRemove={handleReset} disabled={isProcessing} />
+              {!isProcessing && !result ? (
+                <View style={styles.actions}>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Quitar audio"
-                    onPress={handleReset}
-                    hitSlop={6}
-                    style={styles.clear}
+                    accessibilityLabel="Elegir otro audio"
+                    onPress={handlePick}
+                    style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}
                   >
-                    <Ionicons name="close" size={13} color={colors.inkFaint} />
+                    <Ionicons name="folder-open-outline" size={16} color={colors.primary} />
+                    <Text style={styles.secondaryButtonText}>Cambiar audio</Text>
                   </Pressable>
-                ) : null}
-              </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Traducir"
+                    onPress={handleProcess}
+                    disabled={!canTranslate}
+                    style={({ pressed }) => [
+                      styles.primaryButton,
+                      pressed && styles.pressed,
+                      !canTranslate && styles.disabled,
+                    ]}
+                  >
+                    <Ionicons name="language-outline" size={16} color={colors.white} />
+                    <Text style={styles.primaryButtonText}>Traducir audio</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
 
+          {isProcessing ? <ProcessingBubble elapsedSeconds={elapsed} /> : null}
+          {error ? (
+            <ErrorBubble
+              message={error.message}
+              requestId={error.requestId}
+              onRetry={selectedFile && !isProcessing ? handleProcess : undefined}
+            />
+          ) : null}
+          {result ? (
+            <View style={styles.resultSection}>
+              <ResultCard result={result} />
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={primaryLabel}
-                onPress={primaryAction()}
-                disabled={isProcessing || picking}
-                style={({ pressed }) => [
-                  styles.primary,
-                  selectedFile || result ? styles.primaryActive : styles.primaryIdle,
-                  pressed && styles.pressed,
-                  (isProcessing || picking) && styles.primaryProcessing,
-                ]}
+                accessibilityLabel="Traducir otro audio"
+                onPress={handleReset}
+                style={({ pressed }) => [styles.anotherButton, pressed && styles.pressed]}
               >
-                {isProcessing ? (
-                  <ActivityIndicator size="small" color={colors.white} />
-                ) : (
-                  <Ionicons name={primaryIcon} size={15} color={colors.white} />
-                )}
-                <Text style={styles.primaryText}>{primaryLabel}</Text>
+                <Ionicons name="add" size={17} color={colors.primary} />
+                <Text style={styles.anotherButtonText}>Traducir otro audio</Text>
               </Pressable>
+            </View>
+          ) : null}
+
+          <View style={styles.notes}>
+            <View style={styles.noteRow}>
+              <Ionicons name="time-outline" size={15} color={colors.primary} />
+              <Text style={styles.noteText}>
+                La primera carga puede tardar. Las solicitudes se procesan en secuencia; no es
+                una herramienta de tiempo real.
+              </Text>
+            </View>
+            <View style={styles.noteRow}>
+              <Ionicons name="shield-checkmark-outline" size={15} color={colors.primary} />
+              <Text style={styles.noteText}>
+                El resultado se conserva de forma temporal y se elimina según el TTL del
+                servicio. No hay cuentas ni historial persistente.
+              </Text>
+            </View>
+            <View style={styles.noteRow}>
+              <Ionicons name="volume-medium-outline" size={15} color={colors.primary} />
+              <Text style={styles.noteText}>
+                La voz generada usa el audio como referencia y solo busca similitud; no
+                garantiza identidad, emoción ni prosodia.
+              </Text>
             </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-    overflow: 'hidden',
+  root: { flex: 1, backgroundColor: colors.background },
+  scrollContent: { flexGrow: 1, paddingHorizontal: 16 },
+  shell: { width: '100%', maxWidth: 900, alignSelf: 'center' },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+    marginBottom: 36,
   },
-  ambientOne: {
-    position: 'absolute',
-    width: 360,
-    height: 360,
-    borderRadius: 180,
-    backgroundColor: 'rgba(244,161,92,0.08)',
-    top: -160,
-    right: -100,
-  },
-  ambientTwo: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: 'rgba(103,93,224,0.05)',
-    bottom: -140,
-    left: -80,
-  },
-  shell: {
-    flex: 1,
-    width: '100%',
-    maxWidth: 1240,
-    alignSelf: 'center',
-  },
-  shellDesktop: {
-    flexDirection: 'row',
-    gap: 18,
-    paddingHorizontal: 18,
-  },
-  shellMobile: {
-    paddingHorizontal: 0,
-  },
-  panel: {
-    flex: 1,
-    overflow: 'hidden',
-    backgroundColor: colors.surface,
-  },
-  panelDesktop: {
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: 'rgba(21,35,32,0.06)',
-    ...shadows.card,
-  },
-  panelHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    paddingHorizontal: 14,
-    paddingBottom: 10,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(21,35,32,0.045)',
-    zIndex: 2,
-  },
-  identity: {
-    flex: 1,
-    minWidth: 0,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  name: {
-    fontFamily: fonts.extrabold,
-    fontSize: 17,
-    letterSpacing: -0.4,
-    color: colors.ink,
-  },
-  direction: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: 99,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  directionText: {
-    fontFamily: fonts.extrabold,
-    fontSize: 8,
-    letterSpacing: 0.4,
-    color: colors.primary,
-  },
-  subtitle: {
-    fontFamily: fonts.medium,
-    fontSize: 10,
-    color: colors.inkFaint,
-    marginTop: 2,
-  },
-  chatArea: {
-    flex: 1,
-    backgroundColor: colors.chatBackground,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 13,
-    paddingTop: 13,
-    paddingBottom: 18,
-    alignItems: 'center',
-  },
-  thread: {
-    width: '100%',
-    maxWidth: 730,
-    gap: 11,
-  },
-  dateChip: {
-    alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.82)',
-    borderRadius: 99,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginBottom: 2,
-    ...shadows.soft,
-  },
-  dateText: {
-    fontFamily: fonts.extrabold,
-    fontSize: 8.5,
-    letterSpacing: 0.85,
-    color: colors.inkSoft,
-  },
-  assistantRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 7,
-    width: '100%',
-  },
-  botAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 3,
-    shadowColor: colors.primaryDeep,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  assistantBubble: {
-    maxWidth: 600,
-    flexShrink: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    borderTopLeftRadius: 7,
-    borderWidth: 1,
-    borderColor: 'rgba(21,35,32,0.045)',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    ...shadows.soft,
-  },
-  assistantContent: {
-    flex: 1,
-    maxWidth: 690,
-  },
-  welcomeTitle: {
-    fontFamily: fonts.extrabold,
-    fontSize: 15,
-    letterSpacing: -0.25,
-    color: colors.ink,
-    marginBottom: 4,
-  },
-  welcomeText: {
-    fontFamily: fonts.medium,
-    fontSize: 13.5,
-    lineHeight: 20,
-    color: colors.inkSoft,
-  },
-  modelChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-    marginTop: 9,
-  },
-  modelChip: {
-    borderRadius: 99,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    backgroundColor: colors.surfaceMuted,
-  },
-  modelChipText: {
-    fontFamily: fonts.bold,
-    fontSize: 8.5,
-    color: colors.inkSoft,
-  },
-  warning: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 7,
-    marginLeft: 35,
-    padding: 10,
-    borderRadius: 14,
-    backgroundColor: '#FFF5E8',
-    borderWidth: 1,
-    borderColor: '#F4DCBE',
-  },
-  warningText: {
-    flex: 1,
-    fontFamily: fonts.medium,
-    fontSize: 10,
-    lineHeight: 15,
-    color: '#8A5A23',
-  },
-  dropWrap: {
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 1,
-    marginBottom: 2,
-  },
-  userRow: {
-    width: '100%',
-    alignItems: 'flex-end',
-    paddingLeft: 35,
-  },
-  endNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 2,
-  },
-  endNoteText: {
-    fontFamily: fonts.medium,
-    fontSize: 9,
-    color: colors.inkFaint,
-  },
-  composer: {
-    backgroundColor: colors.background,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(21,35,32,0.045)',
-    paddingHorizontal: 11,
-    paddingTop: 9,
-  },
-  composerInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    width: '100%',
-    maxWidth: 780,
-    alignSelf: 'center',
-  },
-  attach: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    ...shadows.soft,
-  },
-  composerPill: {
-    flex: 1,
-    minWidth: 0,
-    height: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: 'rgba(21,35,32,0.05)',
-    ...shadows.soft,
-  },
-  composerCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  composerTitle: {
-    fontFamily: fonts.semibold,
-    fontSize: 12,
-    color: colors.ink,
-  },
-  composerSubtitle: {
-    fontFamily: fonts.medium,
-    fontSize: 9.5,
-    color: colors.inkFaint,
-    marginTop: 1,
-  },
-  clear: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surfaceMuted,
-  },
-  primary: {
-    minWidth: 104,
-    height: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-  },
-  primaryActive: {
-    backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  primaryIdle: {
-    backgroundColor: colors.primary,
-  },
-  primaryProcessing: {
-    backgroundColor: colors.primaryBright,
-  },
-  primaryText: {
-    fontFamily: fonts.bold,
-    fontSize: 11,
-    color: colors.white,
-  },
-  pressed: {
-    opacity: 0.8,
-  },
-  disabled: {
-    opacity: 0.6,
-  },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  brandCopy: { minWidth: 0 },
+  brand: { fontFamily: fonts.extrabold, fontSize: 20, letterSpacing: -0.5, color: colors.ink },
+  brandSub: { fontFamily: fonts.bold, fontSize: 8.5, letterSpacing: 0.9, color: colors.inkFaint, marginTop: 2 },
+  hero: { alignItems: 'center', marginBottom: 24 },
+  heroWide: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 28 },
+  heroCopy: { flex: 1, maxWidth: 590 },
+  eyebrow: { fontFamily: fonts.extrabold, fontSize: 9.5, letterSpacing: 1.2, color: colors.primary },
+  title: { fontFamily: fonts.extrabold, fontSize: 34, lineHeight: 42, letterSpacing: -1.2, color: colors.ink, marginTop: 8 },
+  lead: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 22, color: colors.inkSoft, marginTop: 10, maxWidth: 580 },
+  flow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 5, marginTop: 16 },
+  flowItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  flowText: { fontFamily: fonts.bold, fontSize: 9.5, color: colors.inkSoft },
+  notice: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderRadius: 16, padding: 13, marginBottom: 18 },
+  noticeError: { backgroundColor: '#FFF4F1', borderWidth: 1, borderColor: '#F4D8D1' },
+  noticeWarning: { backgroundColor: colors.accentSoft, borderWidth: 1, borderColor: '#F4DCBE' },
+  noticeBusy: { backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: '#CDEBDF' },
+  noticeCopy: { flex: 1 },
+  noticeTitle: { fontFamily: fonts.bold, fontSize: 12, color: colors.ink },
+  noticeText: { fontFamily: fonts.medium, fontSize: 11, lineHeight: 16, color: colors.inkSoft, marginTop: 2 },
+  validating: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, minHeight: 150 },
+  validatingText: { fontFamily: fonts.medium, fontSize: 12, color: colors.inkSoft },
+  selectedSection: { alignItems: 'center' },
+  actions: { width: '100%', maxWidth: 580, flexDirection: 'row', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 9, marginTop: 14 },
+  secondaryButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44, paddingHorizontal: 14, borderRadius: 13, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
+  secondaryButtonText: { fontFamily: fonts.bold, fontSize: 11.5, color: colors.primary },
+  primaryButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 44, paddingHorizontal: 16, borderRadius: 13, backgroundColor: colors.primary, ...shadows.floating },
+  primaryButtonText: { fontFamily: fonts.bold, fontSize: 11.5, color: colors.white },
+  resultSection: { alignItems: 'center' },
+  anotherButton: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
+  anotherButtonText: { fontFamily: fonts.bold, fontSize: 11.5, color: colors.primary },
+  notes: { marginTop: 32, marginBottom: 8, paddingTop: 18, borderTopWidth: 1, borderTopColor: colors.line, gap: 9 },
+  noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  noteText: { flex: 1, fontFamily: fonts.medium, fontSize: 10.5, lineHeight: 16, color: colors.inkFaint },
+  pressed: { opacity: 0.75 },
+  disabled: { opacity: 0.55 },
 });

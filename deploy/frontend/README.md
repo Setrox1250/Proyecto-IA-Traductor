@@ -1,19 +1,21 @@
-# Hilo — frontend web de traducción de voz
+# Hilo Audio — frontend web de traducción ES→EN
 
-Aplicación **Expo Web / React Native Web** que consume la API FastAPI del
-proyecto. Conserva la identidad visual de mensajería "Hilo", pero ahora ejecuta
-el pipeline real ES→EN.
+Aplicación **Expo Web / React Native Web** centrada en una única tarea: cargar
+un audio en español y recibir su transcripción, traducción al inglés y un WAV
+en inglés condicionado por el audio de referencia. Consume la API FastAPI del
+proyecto; no es una interfaz de chat ni de mensajería.
 
 ## Funcionalidades
 
-- Selección real de audio (WAV, MP3, M4A, OGG, FLAC, WEBM).
+- Drag & drop y selector de audio (WAV, MP3, M4A, OGG, FLAC, WEBM).
 - Validación de extensión, MIME, tamaño y duración.
 - Estado del motor mediante `GET /api/v1/status`.
 - Procesamiento real con aviso de primera carga y bloqueo de envíos duplicados.
 - Visualización de transcripción en español y traducción al inglés.
 - Reproductor real del WAV generado y descarga.
-- Métricas de similitud ECAPA y tiempos del pipeline.
-- Estados vacío, carga, error, reintento y éxito.
+- Duraciones de entrada/salida, tiempos por etapa y similitud ECAPA (no es
+  identidad vocal).
+- Estados vacío, validación, archivo seleccionado, carga, error, reintento y éxito.
 - Diseño responsive para móvil y escritorio.
 
 ## Requisitos
@@ -77,3 +79,7 @@ split `test`, licencia CC BY 4.0. Ver `e2e/fixtures/README.md`.
 - La reproducción nativa de Expo Go no se revalidó en dispositivo físico en esta
   entrega; el navegador sí fue validado.
 - El pipeline es secuencial y no es de tiempo real.
+- La voz generada está condicionada por el audio de referencia; la similitud es
+  aproximada y no garantiza identidad, emoción ni prosodia.
+- El resultado se retiene solo durante el TTL configurado en el backend; no hay
+  cuentas ni historial persistente.

@@ -1,7 +1,7 @@
 # Índice documental
 
 **Proyecto:** Traducción de Mensajes de Audio con Clonación de Voz mediante Inteligencia Artificial
-**Última actualización:** 2026-11-05
+**Última actualización:** 2026-11-18
 **Run final de referencia:** `outputs/final_eval/master_20261104_082658/`
 **Commit de ejecución registrado:** `e2df5999daf5a0635c8986794742fef35f179b1d` (historial anterior a la limpieza)
 
@@ -20,13 +20,15 @@ Documentos que describen el estado final y deben usarse para el informe y la pub
 | `Docs/NMT_CONTROLLED_EXPERIMENT_10K.md` | Experimento NMT de 10 000 pares |
 | `Docs/NMT_CONTROLLED_EXPERIMENT_10K.json` | Resumen machine-readable del experimento 10k |
 | `Docs/REVISION_INFORME_ACADEMICO_FINAL.md` | Revisión orientativa del documento académico I–VI |
+| `Docs/GUIA_INFORME_ACADEMICO_I_VII.md` | Guía y plantilla para redactar el informe académico I–VII |
 | `Docs/contexto_alcance.md` | Contexto y alcance funcional |
 | `Docs/responsabilidades_modelos.md` | Responsabilidades y estrategia de aprendizaje |
 | `Docs/DEPLOYMENT_IMPLEMENTATION_PLAN.md` | Auditoría y plan de implementación web |
 | `Docs/DEPLOYMENT_GUIDE.md` | Instalación, ejecución, Docker, GPU y troubleshooting |
 | `Docs/API_DOCUMENTATION.md` | Endpoints, contratos, códigos de error y ejemplos |
 | `Docs/END_TO_END_TEST_REPORT.md` | Pruebas de backend, frontend y E2E real |
-| `Docs/DEPLOYMENT_STATUS.md` | Estado local vs. despliegue público |
+| `Docs/DEPLOYMENT_STATUS.md` | Estado local vs. despliegue público y verificación vigente |
+| `Docs/DEPLOY_HANDOFF.md` | Dirección funcional y guía operativa para quien despliegue el sistema |
 | `Docs/DEPLOYMENT_IMPLEMENTATION_REPORT.md` | Informe integral de la implementación |
 | `Docs/deploy_evidence/README.md` | Índice de capturas, logs y artefactos reales |
 | `Docs/auditoria_limpieza/INFORME_LIMPIEZA_REPOSITORIO.md` | Limpieza, consolidación y estado final del repositorio |

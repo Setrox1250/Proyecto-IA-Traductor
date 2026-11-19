@@ -4,24 +4,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts } from '../theme';
 
 function resolveState(status, error, loading) {
-  if (error) return { label: 'Sin conexión', tone: 'error', dot: colors.danger };
+  if (error) return { label: 'No disponible', tone: 'error', dot: colors.danger };
   if (!status && loading) {
     return { label: 'Conectando…', tone: 'neutral', dot: colors.inkFaint };
   }
   if (status?.pipeline?.busy) {
-    return { label: 'Procesando audio', tone: 'busy', dot: colors.accent };
+    return { label: 'Procesando', tone: 'busy', dot: colors.accent };
   }
   if (status?.status === 'degraded') {
-    return { label: 'Licencia pendiente', tone: 'warning', dot: colors.accent };
+    return { label: 'Degradado', tone: 'warning', dot: colors.accent };
   }
   if (status?.pipeline?.ready) {
     return {
-      label: status.pipeline.warm ? 'Motor listo' : 'Motor disponible',
+      label: 'Disponible',
       tone: 'ok',
       dot: colors.online,
     };
   }
-  return { label: 'Estado desconocido', tone: 'neutral', dot: colors.inkFaint };
+  return { label: 'No disponible', tone: 'neutral', dot: colors.inkFaint };
 }
 
 export default function EngineStatusPill({ status, error, loading, onRefresh }) {

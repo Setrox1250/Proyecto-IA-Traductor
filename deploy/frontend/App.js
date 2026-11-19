@@ -25,7 +25,7 @@ export default function App() {
 
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      document.title = 'Hilo · Traductor de voz ES → EN';
+      document.title = 'Hilo Audio · Traducción ES → EN';
     }
   }, []);
 

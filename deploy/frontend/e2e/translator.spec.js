@@ -121,9 +121,9 @@ async function pickFile(page, file = SAMPLE) {
 test('muestra la pantalla principal y el estado real del motor', async ({ page }) => {
   await mockApi(page);
   await page.goto('/');
-  await expect(page.getByText('Hola, soy Hilo.')).toBeVisible();
-  await expect(page.getByText('Sube una nota de voz en español', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Motor listo. Actualizar estado' }).first()).toBeVisible();
+  await expect(page.getByText('Traduce un audio en español al inglés.')).toBeVisible();
+  await expect(page.getByText('Carga un audio en español', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Disponible. Actualizar estado' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Seleccionar archivo de audio' })).toBeVisible();
 });
 
@@ -133,7 +133,22 @@ test('selecciona un audio, lo muestra y habilita la traducción', async ({ page 
   await pickFile(page);
   await expect(page.getByText('fleurs_es_419_test_0000.wav').first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Traducir' })).toBeEnabled();
-  await expect(page.getByRole('button', { name: 'Quitar audio', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Quitar audio seleccionado' })).toBeVisible();
+});
+
+test('acepta un archivo soltado en la zona de carga', async ({ page }) => {
+  await mockApi(page);
+  await page.goto('/');
+  const dataTransfer = await page.evaluateHandle(() => {
+    const transfer = new DataTransfer();
+    transfer.items.add(new File(['audio de prueba'], 'audio_arrastrado.wav', { type: 'audio/wav' }));
+    return transfer;
+  });
+  const dropZone = page.getByLabel('Zona para soltar un archivo de audio');
+  await dropZone.dispatchEvent('dragenter', { dataTransfer });
+  await expect(page.getByText('Suelta el audio aquí')).toBeVisible();
+  await dropZone.dispatchEvent('drop', { dataTransfer });
+  await expect(page.getByText('audio_arrastrado.wav').first()).toBeVisible();
 });
 
 test('muestra el procesamiento y luego los resultados reales del contrato', async ({ page }) => {
@@ -146,12 +161,29 @@ test('muestra el procesamiento y luego los resultados reales del contrato', asyn
   await expect(page.getByText(/Se recomienda a los viajeros/)).toBeVisible();
   await expect(page.getByText(/Travelers are advised/)).toBeVisible();
   await expect(page.getByText('Similitud ECAPA', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Nuevo audio' })).toBeVisible();
+  await expect(page.getByText('Tiempos del pipeline')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Traducir otro audio' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Reproducir audio traducido' }).click();
   await expect(
     page.getByRole('button', { name: 'Pausar audio traducido' }),
   ).toBeVisible();
+});
+
+test('evita envíos duplicados mientras procesa el mismo audio', async ({ page }) => {
+  let translations = 0;
+  await mockApi(page, { translateDelay: 500 });
+  page.on('request', (request) => {
+    if (request.url().includes('/api/v1/translate')) translations += 1;
+  });
+  await page.goto('/');
+  await pickFile(page);
+  await page.getByRole('button', { name: 'Traducir' }).evaluate((button) => {
+    button.click();
+    button.click();
+  });
+  await expect(page.getByText('Traducción completada')).toBeVisible();
+  expect(translations).toBe(1);
 });
 
 test('permite descargar el audio generado', async ({ page }) => {
@@ -202,6 +234,21 @@ test('adaptación móvil sin sidebar', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await expect(page.getByText('Cómo funciona')).toHaveCount(0);
-  await expect(page.getByText('Sube una nota de voz en español', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('Adjuntar archivo de audio')).toBeVisible();
+  await expect(page.getByText('Carga un audio en español', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Zona para soltar un archivo de audio')).toBeVisible();
+});
+
+test('muestra estados de motor degradado y no disponible de forma explícita', async ({ page }) => {
+  await page.route('**/api/v1/status', (route) =>
+    route.fulfill({ status: 200, json: { ...STATUS, status: 'degraded', pipeline: { ...STATUS.pipeline, ready: false } } }),
+  );
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Degradado. Actualizar estado' })).toBeVisible();
+  await expect(page.getByText('Motor degradado')).toBeVisible();
+
+  await page.unroute('**/api/v1/status');
+  await page.route('**/api/v1/status', (route) => route.abort('failed'));
+  await page.getByRole('button', { name: 'Degradado. Actualizar estado' }).click();
+  await expect(page.getByRole('button', { name: 'No disponible. Actualizar estado' })).toBeVisible();
+  await expect(page.getByText('Motor no disponible')).toBeVisible();
 });

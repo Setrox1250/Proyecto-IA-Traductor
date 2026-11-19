@@ -23,9 +23,20 @@ function Chip({ icon, label, value }) {
   );
 }
 
+function Timing({ label, value }) {
+  return (
+    <View style={styles.timing}>
+      <Text style={styles.timingLabel}>{label}</Text>
+      <Text style={styles.timingValue}>{formatSeconds(value)}</Text>
+    </View>
+  );
+}
+
 export default function ResultCard({ result }) {
   const [downloading, setDownloading] = useState(false);
+  const [showSupportId, setShowSupportId] = useState(false);
   const subtitleTime = formatTime(result.created_at);
+  const expiresAt = formatTime(result.expires_at);
 
   const handleDownload = async () => {
     if (downloading) return;
@@ -99,9 +110,9 @@ export default function ResultCard({ result }) {
             <Ionicons name="volume-high" size={14} color={colors.white} />
           </View>
           <View style={styles.audioTitle}>
-            <Text style={styles.audioTitleText}>Voz generada en inglés</Text>
+            <Text style={styles.audioTitleText}>WAV generado en inglés</Text>
             <Text style={styles.audioSubtitle}>
-              XTTS-v2 · {result.audio.sample_rate / 1000} kHz
+              Voz condicionada por la referencia · XTTS-v2 · {result.audio.sample_rate / 1000} kHz
             </Text>
           </View>
           <View style={styles.waveBadge}>
@@ -151,7 +162,17 @@ export default function ResultCard({ result }) {
         />
         <Chip
           icon="time-outline"
-          label="Total"
+          label="Audio original"
+          value={formatSeconds(result.input?.duration_sec)}
+        />
+        <Chip
+          icon="volume-high-outline"
+          label="WAV generado"
+          value={formatSeconds(result.audio.duration_sec)}
+        />
+        <Chip
+          icon="time-outline"
+          label="Proceso total"
           value={formatSeconds(result.timings.total_sec)}
         />
         <Chip
@@ -161,10 +182,38 @@ export default function ResultCard({ result }) {
         />
       </View>
 
+      <View style={styles.timingPanel}>
+        <Text style={styles.timingTitle}>Tiempos del pipeline</Text>
+        <View style={styles.timingGrid}>
+          <Timing label="Preparación" value={result.timings.preprocessing_sec} />
+          <Timing label="Transcripción" value={result.timings.asr_sec} />
+          <Timing label="Traducción" value={result.timings.translation_sec} />
+          <Timing label="Síntesis WAV" value={result.timings.xtts_sec} />
+          <Timing label="ECAPA" value={result.timings.speaker_evaluation_sec} />
+          <Timing label="API" value={result.timings.api_sec} />
+        </View>
+      </View>
+
       <Text style={styles.disclaimer}>
         La similitud ECAPA es una métrica objetiva de embeddings, no un porcentaje
-        de identidad. La clonación es aproximada y el proceso no es en tiempo real.
+        de identidad. La voz condicionada por la referencia es aproximada y el proceso
+        no es en tiempo real.
       </Text>
+      <View style={styles.supportRow}>
+        <Text style={styles.expiryText}>
+          {expiresAt ? `Disponible hasta aprox. ${expiresAt}.` : 'Resultado temporal.'}
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Mostrar referencia de soporte"
+          onPress={() => setShowSupportId((value) => !value)}
+        >
+          <Text style={styles.supportButton}>
+            {showSupportId ? 'Ocultar referencia' : 'Referencia de soporte'}
+          </Text>
+        </Pressable>
+      </View>
+      {showSupportId ? <Text style={styles.supportId}>ID: {result.id}</Text> : null}
     </View>
   );
 }
@@ -371,6 +420,38 @@ const styles = StyleSheet.create({
     gap: 6,
     marginTop: 11,
   },
+  timingPanel: {
+    marginTop: 13,
+    padding: 11,
+    borderRadius: 14,
+    backgroundColor: colors.surfaceMuted,
+  },
+  timingTitle: {
+    fontFamily: fonts.bold,
+    fontSize: 10,
+    color: colors.inkSoft,
+    marginBottom: 8,
+  },
+  timingGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 7,
+  },
+  timing: {
+    minWidth: 88,
+    flexGrow: 1,
+  },
+  timingLabel: {
+    fontFamily: fonts.medium,
+    fontSize: 8.5,
+    color: colors.inkFaint,
+  },
+  timingValue: {
+    fontFamily: fonts.extrabold,
+    fontSize: 10,
+    color: colors.inkSoft,
+    marginTop: 1,
+  },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -396,5 +477,29 @@ const styles = StyleSheet.create({
     lineHeight: 13,
     color: colors.inkFaint,
     marginTop: 9,
+  },
+  supportRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 9,
+  },
+  expiryText: {
+    flex: 1,
+    fontFamily: fonts.medium,
+    fontSize: 8.5,
+    color: colors.inkFaint,
+  },
+  supportButton: {
+    fontFamily: fonts.bold,
+    fontSize: 8.5,
+    color: colors.primary,
+  },
+  supportId: {
+    fontFamily: fonts.medium,
+    fontSize: 8.5,
+    color: colors.inkFaint,
+    marginTop: 4,
   },
 });

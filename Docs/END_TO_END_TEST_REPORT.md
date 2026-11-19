@@ -1,4 +1,4 @@
-# Reporte de pruebas de extremo a extremo
+s# Reporte de pruebas de extremo a extremo
 
 - **Fecha:** 2026-11-04 / 2026-11-05
 - **Rama:** `feature/web-deployment`

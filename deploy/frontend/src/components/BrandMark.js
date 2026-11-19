@@ -15,7 +15,7 @@ export default function BrandMark({ size = 42 }) {
         { width: size, height: size, borderRadius: size * 0.34 },
       ]}
     >
-      <Ionicons name="chatbubble-ellipses" size={size * 0.5} color={colors.white} />
+      <Ionicons name="volume-high" size={size * 0.5} color={colors.white} />
       <View style={[styles.dot, { width: size * 0.2, height: size * 0.2 }]} />
     </LinearGradient>
   );

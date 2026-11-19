@@ -372,11 +372,13 @@ La licencia MIT del código **no cubre** los pesos de XTTS-v2 ni los datasets. V
 - `Docs/API_DOCUMENTATION.md` — endpoints, contratos y errores.
 - `Docs/END_TO_END_TEST_REPORT.md` — pruebas y resultados reales.
 - `Docs/DEPLOYMENT_STATUS.md` — qué está y qué no está desplegado.
+- `Docs/DEPLOY_HANDOFF.md` — dirección funcional y guía operativa para despliegue.
 - `Docs/DEPLOYMENT_IMPLEMENTATION_REPORT.md` — informe integral.
 - `Docs/deploy_evidence/` — capturas, logs y artefactos reales.
 - `Docs/TECHNICAL_AUDIT.md` — estado técnico consolidado.
 - `Docs/REPORTE_DATASET_B_FINAL.md` — evaluación final FLEURS.
 - `Docs/NMT_CONTROLLED_EXPERIMENT_10K.md` — experimento NMT y decisión de usar base.
 - `Docs/REVISION_INFORME_ACADEMICO_FINAL.md` — revisión del documento académico I–VI.
+- `Docs/GUIA_INFORME_ACADEMICO_I_VII.md` — guía y plantilla para redactar el informe académico I–VII.
 - `Docs/auditoria_limpieza/INFORME_LIMPIEZA_REPOSITORIO.md` — informe de limpieza y consolidación.
 - `THIRD_PARTY_LICENSES.md` — licencias de terceros.

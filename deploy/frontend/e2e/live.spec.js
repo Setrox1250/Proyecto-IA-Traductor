@@ -9,7 +9,7 @@ test.describe('E2E real con pipeline', () => {
 
   test('sube FLEURS, traduce y descarga el WAV generado', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('button', { name: /Motor (listo|disponible)\. Actualizar estado/ }).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('button', { name: 'Disponible. Actualizar estado' })).toBeVisible({ timeout: 30_000 });
 
     const [chooser] = await Promise.all([
       page.waitForEvent('filechooser'),

@@ -13,7 +13,7 @@ export default function SelectedAudioBubble({
 }) {
   return (
     <LinearGradient
-      colors={['#157065', '#0A4A43']}
+      colors={['#16766A', '#0A4A43']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.bubble}
@@ -27,7 +27,7 @@ export default function SelectedAudioBubble({
             {file.name}
           </Text>
           <Text style={styles.meta}>
-            Audio original · Español · {formatBytes(file.size)}
+            Audio original en español · {formatBytes(file.size)}
             {file.durationSec ? ` · ${formatDuration(file.durationSec)}` : ''}
           </Text>
         </View>
@@ -55,7 +55,7 @@ export default function SelectedAudioBubble({
 
       <View style={styles.footer}>
         <Ionicons name="lock-closed-outline" size={10} color="rgba(255,255,255,0.5)" />
-        <Text style={styles.footerText}>Se enviará al motor local para traducirse</Text>
+        <Text style={styles.footerText}>Listo para una ejecución secuencial del pipeline</Text>
       </View>
     </LinearGradient>
   );
